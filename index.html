@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duta Norma: Edisi Ular Tangga (PPKn SMP)</title>
+  <!-- Google Fonts: Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background-color: #f0f9ff;
+      background-image:
+        radial-gradient(#bae6fd 1.5px, transparent 1.5px),
+        radial-gradient(#fde68a 1.5px, #f0f9ff 1.5px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Efek tombol 3D ramah anak */
+    .btn-3d {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+    }
+    .btn-3d:active:not(:disabled) {
+      transform: translateY(3px);
+    }
+
+    /* Animasi kocok dadu */
+    @keyframes diceTumble {
+      0% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(-18deg) scale(1.12); }
+      40% { transform: rotate(16deg) scale(0.95); }
+      60% { transform: rotate(-14deg) scale(1.1); }
+      80% { transform: rotate(12deg) scale(1.03); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+    .animate-dice {
+      animation: diceTumble 0.45s ease-in-out infinite;
+    }
+
+    /* Animasi melompat pion */
+    @keyframes pawnHop {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -72%) scale(1.18); }
+    }
+    .pawn-hopping {
+      animation: pawnHop 0.28s ease-out;
+    }
+
+    /* Animasi denyut bintang kotak spesial */
+    @keyframes starPulse {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.18) rotate(8deg); }
+    }
+    .animate-star {
+      animation: starPulse 2.2s ease-in-out infinite;
+    }
+
+    /* Animasi modal muncul */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.88) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop-in {
+      animation: popIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Animasi getar validasi */
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-4px); }
+    }
+    .animate-shake {
+      animation: shakeError 0.35s ease-in-out;
+    }
+
+    /* Grid Dadu 3x3 */
+    .dice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      padding: 10px;
+    }
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 9999px;
+      background-color: #1e293b;
+      box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
+    }
+    .pip-red {
+      background-color: #e11d48;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden">
+
+  <!-- =========================================================
+       HEADER / NAVBAR GLOBAL
+  ========================================================= -->
+  <header class="w-full bg-white/90 backdrop-blur-md border-b-4 border-sky-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+      <!-- Logo & Judul -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl shadow-md border-b-4 border-orange-600">
+          ⚖️
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold text-sky-900 leading-tight tracking-tight">
+            Duta Norma
+          </h1>
+          <p class="text-[11px] sm:text-xs font-medium text-sky-600">
+            Edisi Ular Tangga • PPKn SMP
+          </p>
+        </div>
+      </div>
+
+      <!-- Kontrol Kanan: Audio & Menu -->
+      <div class="flex items-center gap-2">
+        <button
+          id="btn-toggle-sound"
+          type="button"
+          title="Suara Efek Game"
+          class="btn-3d px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 font-semibold text-sm border-b-4 border-sky-300 flex items-center gap-1.5"
+        >
+          <span id="sound-icon">🔊</span>
+          <span class="hidden sm:inline" id="sound-label">Suara Aktif</span>
+        </button>
+
+        <button
+          id="btn-open-rules"
+          type="button"
+          class="btn-3d px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold text-sm border-b-4 border-amber-300 flex items-center gap-1.5"
+        >
+          <span>📖</span>
+          <span class="hidden sm:inline">Aturan</span>
+        </button>
+
+        <button
+          id="btn-home-nav"
+          type="button"
+          class="hidden btn-3d px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold text-sm border-b-4 border-rose-300 flex items-center gap-1.5"
+        >
+          <span>🏠</span>
+          <span class="hidden sm:inline">Keluar</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       MAIN CONTAINER (SPA VIEWS)
+  ========================================================= -->
+  <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-5 flex flex-col justify-center">
+
+    <!-- -------------------------------------------------------
+         1. HALAMAN AWAL (START SCREEN)
+    -------------------------------------------------------- -->
+    <section id="start-screen" class="w-full max-w-xl mx-auto animate-pop-in">
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-sky-200 p-6 sm:p-8 relative overflow-hidden">
+        <!-- Dekorasi sudut -->
+        <div class="absolute -top-6 -right-6 w-24 h-24 bg-amber-200/50 rounded-full pointer-events-none"></div>
+        <div class="absolute -bottom-8 -left-8 w-28 h-28 bg-sky-200/50 rounded-full pointer-events-none"></div>
+
+        <!-- Badge & Hero Title -->
+        <div class="text-center mb-6 relative z-10">
+          <span class="inline-block px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-xs sm:text-sm border border-emerald-300 mb-2">
+            🇮🇩 Kurikulum Merdeka • Pendidikan Pancasila SMP
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">
+            Duta Norma: <span class="text-sky-600">Ular Tangga</span>
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base mt-2">
+            Uji pemahamanmu tentang <strong>Norma & Keadilan</strong>! Jawab tantangan kuis untuk menaiki tangga kebaikan dan hindari ular pelanggaran.
+          </p>
+        </div>
+
+        <!-- Pesan Validasi Form (Pengganti alert) -->
+        <div
+          id="form-error-box"
+          class="hidden mb-4 p-3 rounded-2xl bg-rose-100 border-2 border-rose-300 text-rose-800 text-sm font-medium flex items-center gap-2"
+        >
+          <span>⚠️</span>
+          <span id="form-error-text">Mohon lengkapi semua data pemain terlebih dahulu!</span>
+        </div>
+
+        <!-- Form Input Pemain -->
+        <form id="start-form" class="space-y-4 relative z-10" novalidate>
+          <!-- Pemain 1 (Merah) -->
+          <div class="bg-rose-50/80 p-3.5 rounded-2xl border-2 border-rose-200">
+            <label for="input-p1" class="block text-sm font-bold text-rose-800 mb-1.5 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-rose-500 inline-block border-2 border-white shadow"></span>
+              Nama Pemain 1 (Pion Merah)
+            </label>
+            <input
+              id="input-p1"
+              type="text"
+              maxlength="20"
+              placeholder="Contoh: Arjuna Pratama"
+              class="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-rose-200 focus:border-rose-500 focus:outline-none text-slate-800 font-medium placeholder:text-slate-400"
+            />
+          </div>
+
+          <!-- Pemain 2 (Biru) -->
+          <div class="bg-blue-50/80 p-3.5 rounded-2xl border-2 border-blue-200">
+            <label for="input-p2" class="block text-sm font-bold text-blue-800 mb-1.5 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-600 inline-block border-2 border-white shadow"></span>
+              Nama Pemain 2 (Pion Biru)
+            </label>
+            <input
+              id="input-p2"
+              type="text"
+              maxlength="20"
+              placeholder="Contoh: Kirana Dewi"
+              class="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-blue-200 focus:border-blue-500 focus:outline-none text-slate-800 font-medium placeholder:text-slate-400"
+            />
+          </div>
+
+          <!-- Kelas & Sekolah (Tim) -->
+          <div class="bg-amber-50/80 p-3.5 rounded-2xl border-2 border-amber-200">
+            <label for="input-team" class="block text-sm font-bold text-amber-900 mb-1.5 flex items-center gap-2">
+              <span>🏫</span>
+              Kelas & Sekolah (Identitas Tim)
+            </label>
+            <input
+              id="input-team"
+              type="text"
+              maxlength="35"
+              placeholder="Contoh: Kelas 7A - SMPN 1 Nusantara"
+              class="w-full px-4 py-2.5 rounded-xl bg-white border-2 border-amber-200 focus:border-amber-500 focus:outline-none text-slate-800 font-medium placeholder:text-slate-400"
+            />
+          </div>
+
+          <!-- Tombol Aksi -->
+          <div class="pt-2 flex flex-col sm:flex-row gap-3">
+            <button
+              type="submit"
+              class="btn-3d flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-lg shadow-lg border-b-4 border-emerald-700 flex items-center justify-center gap-2"
+            >
+              <span>Mulai Bermain</span>
+              <span>🚀</span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-view-leaderboard-start"
+              class="btn-3d py-3.5 px-5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-base shadow-md border-b-4 border-amber-600 flex items-center justify-center gap-2"
+            >
+              <span>🏆</span>
+              <span>Leaderboard</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------
+         2. HALAMAN PERMAINAN (GAME SCREEN)
+    -------------------------------------------------------- -->
+    <section id="game-screen" class="hidden w-full animate-pop-in">
+      <!-- Info Tim Banner -->
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2 bg-white/90 px-4 py-2 rounded-2xl border-2 border-sky-200 shadow-sm">
+        <div class="flex items-center gap-2 text-sm font-semibold text-sky-900">
+          <span>🏫</span>
+          <span id="display-team-name">Kelas 7A - SMPN 1 Nusantara</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-semibold">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+            ⭐ Kotak Spesial (Tangga / Ular)
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-100 text-sky-900 border border-sky-300">
+            📘 Kotak Kuis Bonus
+          </span>
+        </div>
+      </div>
+
+      <!-- Layout Utama Permainan: Papan di Kiri, Panel Kontrol di Kanan -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- KOLOM PAPAN ULAR TANGGA 5x5 (7 Kolom di Desktop) -->
+        <div class="lg:col-span-7 flex flex-col items-center">
+          <div class="w-full max-w-[490px] bg-white p-2.5 sm:p-3.5 rounded-3xl shadow-xl border-4 border-emerald-400 relative">
+            <!-- Container Aspek Rasio 1:1 untuk Grid + SVG Overlay + Pion -->
+            <div id="board-wrapper" class="relative w-full aspect-square rounded-2xl overflow-hidden border-2 border-emerald-600 bg-emerald-50">
+              <!-- Grid 5x5 Kotak -->
+              <div id="board-grid" class="w-full h-full grid grid-cols-5 grid-rows-5"></div>
+
+              <!-- SVG Overlay untuk Menggambar Tangga & Ular secara Presisi -->
+              <svg
+                id="board-svg"
+                viewBox="0 0 500 500"
+                class="absolute inset-0 w-full h-full pointer-events-none z-10"
+              ></svg>
+
+              <!-- Layer Pion Pemain (Real-Time Smooth Movement) -->
+              <div id="pawns-layer" class="absolute inset-0 pointer-events-none z-20">
+                <!-- Pion 1 (Merah) -->
+                <div
+                  id="pawn-1"
+                  class="absolute w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-b from-rose-400 to-rose-600 border-[3px] border-white shadow-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm transition-all duration-300 ease-out"
+                  style="left: 10%; top: 90%; transform: translate(-50%, -50%);"
+                >
+                  P1
+                </div>
+                <!-- Pion 2 (Biru) -->
+                <div
+                  id="pawn-2"
+                  class="absolute w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-b from-blue-400 to-blue-700 border-[3px] border-white shadow-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm transition-all duration-300 ease-out"
+                  style="left: 10%; top: 90%; transform: translate(-50%, -50%);"
+                >
+                  P2
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KOLOM PANEL KONTROL & GILIRAN PEMAIN (5 Kolom di Desktop) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+
+          <!-- Kartu Status Pemain 1 & Pemain 2 -->
+          <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+            <!-- Kartu Pemain 1 -->
+            <div
+              id="card-p1"
+              class="p-3.5 rounded-2xl bg-white border-4 border-rose-400 shadow-md transition-all relative"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center shrink-0 border-2 border-rose-200 shadow">
+                    P1
+                  </div>
+                  <div class="truncate">
+                    <h3 id="game-p1-name" class="font-bold text-slate-800 text-sm sm:text-base truncate">
+                      Pemain 1
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium">
+                      Posisi: <span id="game-p1-pos" class="font-bold text-rose-600">Kotak 1</span>
+                    </p>
+                  </div>
+                </div>
+                <span
+                  id="turn-badge-p1"
+                  class="px-2.5 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold animate-bounce shrink-0"
+                >
+                  GILIRAN!
+                </span>
+              </div>
+              <div class="mt-2.5 pt-2 border-t border-rose-100 flex items-center justify-between text-xs font-semibold text-slate-600">
+                <span>🎲 Lemparan: <strong id="game-p1-rolls" class="text-slate-800">0</strong></span>
+                <span>✅ Benar: <strong id="game-p1-correct" class="text-emerald-600">0</strong></span>
+              </div>
+            </div>
+
+            <!-- Kartu Pemain 2 -->
+            <div
+              id="card-p2"
+              class="p-3.5 rounded-2xl bg-white/80 border-2 border-slate-200 shadow-sm transition-all relative opacity-80"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 border-2 border-blue-200 shadow">
+                    P2
+                  </div>
+                  <div class="truncate">
+                    <h3 id="game-p2-name" class="font-bold text-slate-800 text-sm sm:text-base truncate">
+                      Pemain 2
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium">
+                      Posisi: <span id="game-p2-pos" class="font-bold text-blue-600">Kotak 1</span>
+                    </p>
+                  </div>
+                </div>
+                <span
+                  id="turn-badge-p2"
+                  class="hidden px-2.5 py-1 rounded-full bg-blue-600 text-white text-[11px] font-bold animate-bounce shrink-0"
+                >
+                  GILIRAN!
+                </span>
+              </div>
+              <div class="mt-2.5 pt-2 border-t border-blue-100 flex items-center justify-between text-xs font-semibold text-slate-600">
+                <span>🎲 Lemparan: <strong id="game-p2-rolls" class="text-slate-800">0</strong></span>
+                <span>✅ Benar: <strong id="game-p2-correct" class="text-emerald-600">0</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kotak Dadu Interaktif & Status -->
+          <div class="bg-white rounded-3xl p-5 border-4 border-sky-200 shadow-lg flex flex-col items-center text-center">
+            <!-- Status Log Dinamis -->
+            <div
+              id="status-banner"
+              class="w-full mb-4 px-3.5 py-2.5 rounded-2xl bg-sky-50 border-2 border-sky-200 text-sky-900 font-semibold text-sm min-h-[48px] flex items-center justify-center"
+            >
+              Giliran Pemain 1! Tekan tombol Kocok Dadu.
+            </div>
+
+            <!-- Visual Dadu 3D -->
+            <div class="mb-4 relative">
+              <div
+                id="dice-box"
+                class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-white to-slate-100 border-4 border-slate-300 shadow-xl dice-grid mx-auto"
+              >
+                <!-- Titik dadu dirender via JS -->
+              </div>
+              <span
+                id="dice-value-label"
+                class="mt-1.5 inline-block text-xs font-bold text-slate-500"
+              >
+                Angka Dadu: -
+              </span>
+            </div>
+
+            <!-- Tombol Kocok Dadu -->
+            <button
+              id="btn-roll-dice"
+              type="button"
+              class="btn-3d w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-lg shadow-lg border-b-4 border-orange-700 flex items-center justify-center gap-2.5"
+            >
+              <span class="text-2xl">🎲</span>
+              <span>KOCOK DADU</span>
+            </button>
+          </div>
+
+          <!-- Legenda Rute Tangga & Ular -->
+          <div class="bg-white/90 rounded-2xl p-3.5 border-2 border-slate-200 text-xs">
+            <h4 class="font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <span>🗺️</span> Rute Kotak Spesial (⭐):
+            </h4>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                <p class="font-bold text-emerald-800 mb-1">🪜 Tangga (Jawab Benar = Naik)</p>
+                <ul class="text-emerald-700 space-y-0.5 font-medium">
+                  <li>• Kotak 3 ➔ 11</li>
+                  <li>• Kotak 7 ➔ 17</li>
+                  <li>• Kotak 13 ➔ 22</li>
+                </ul>
+              </div>
+              <div class="bg-rose-50 p-2 rounded-xl border border-rose-200">
+                <p class="font-bold text-rose-800 mb-1">🐍 Ular (Jawab Salah = Turun)</p>
+                <ul class="text-rose-700 space-y-0.5 font-medium">
+                  <li>• Kotak 14 ➔ 4</li>
+                  <li>• Kotak 19 ➔ 9</li>
+                  <li>• Kotak 24 ➔ 15</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------
+         3. HALAMAN GAME OVER (VICTORY SCREEN)
+    -------------------------------------------------------- -->
+    <section id="gameover-screen" class="hidden w-full max-w-xl mx-auto animate-pop-in">
+      <div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-300 p-6 sm:p-8 text-center relative overflow-hidden">
+        <!-- Latar confetti -->
+        <div class="text-5xl sm:text-6xl mb-3 animate-bounce">🏆</div>
+        <span class="inline-block px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm border border-amber-300 mb-2">
+          SELAMAT! DUTA NORMA TERPILIH!
+        </span>
+
+        <h2 id="winner-name-display" class="text-3xl sm:text-4xl font-bold text-slate-800 mt-1">
+          Nama Pemenang
+        </h2>
+        <p id="winner-team-display" class="text-sm sm:text-base font-semibold text-sky-600 mt-1">
+          Kelas & Sekolah
+        </p>
+
+        <!-- Statistik Pertandingan -->
+        <div class="grid grid-cols-3 gap-2.5 sm:gap-3 my-6">
+          <div class="bg-sky-50 p-3 rounded-2xl border-2 border-sky-200">
+            <p class="text-[11px] sm:text-xs font-semibold text-sky-700">Total Lemparan</p>
+            <p id="stat-winner-rolls" class="text-xl sm:text-2xl font-bold text-sky-900 mt-0.5">0</p>
+          </div>
+          <div class="bg-emerald-50 p-3 rounded-2xl border-2 border-emerald-200">
+            <p class="text-[11px] sm:text-xs font-semibold text-emerald-700">Jawaban Benar</p>
+            <p id="stat-winner-correct" class="text-xl sm:text-2xl font-bold text-emerald-900 mt-0.5">0</p>
+          </div>
+          <div class="bg-amber-50 p-3 rounded-2xl border-2 border-amber-200">
+            <p class="text-[11px] sm:text-xs font-semibold text-amber-700">Skor Akhir</p>
+            <p id="stat-winner-score" class="text-xl sm:text-2xl font-bold text-amber-900 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <!-- Ringkasan Kedua Pemain -->
+        <div id="match-summary-box" class="mb-6 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-600">
+          <!-- Diisi via JS -->
+        </div>
+
+        <!-- Tombol Navigasi Akhir -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            id="btn-go-leaderboard"
+            type="button"
+            class="btn-3d flex-1 py-3.5 px-5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-base shadow-md border-b-4 border-amber-600 flex items-center justify-center gap-2"
+          >
+            <span>🏆</span>
+            <span>Lihat Leaderboard</span>
+          </button>
+
+          <button
+            id="btn-play-again"
+            type="button"
+            class="btn-3d flex-1 py-3.5 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base shadow-md border-b-4 border-emerald-700 flex items-center justify-center gap-2"
+          >
+            <span>🔄</span>
+            <span>Main Lagi</span>
+          </button>
+        </div>
+
+        <button
+          id="btn-gameover-home"
+          type="button"
+          class="mt-3 text-sm font-semibold text-slate-500 hover:text-slate-800 underline"
+        >
+          Kembali ke Halaman Awal
+        </button>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------
+         4. HALAMAN LEADERBOARD (PODIUM 3 BESAR & DAFTAR SKOR)
+    -------------------------------------------------------- -->
+    <section id="leaderboard-screen" class="hidden w-full max-w-2xl mx-auto animate-pop-in">
+      <div class="bg-white rounded-3xl shadow-xl border-4 border-amber-300 p-5 sm:p-7">
+        <div class="text-center mb-6">
+          <span class="inline-block px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 mb-1.5">
+            PAPAN PERINGKAT DUTA NORMA
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-bold text-slate-800">
+            🏆 Podium Skor Terbaik
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Skor dihitung dari efisiensi jumlah lemparan dadu & ketepatan menjawab kuis norma!
+          </p>
+        </div>
+
+        <!-- PODIUM 3 BESAR -->
+        <div id="podium-container" class="grid grid-cols-3 gap-2 sm:gap-4 items-end mb-6 pt-4 px-1">
+          <!-- Juara 2 (Kiri) -->
+          <div id="podium-2" class="flex flex-col items-center text-center"></div>
+          <!-- Juara 1 (Tengah - Tertinggi) -->
+          <div id="podium-1" class="flex flex-col items-center text-center"></div>
+          <!-- Juara 3 (Kanan) -->
+          <div id="podium-3" class="flex flex-col items-center text-center"></div>
+        </div>
+
+        <!-- DAFTAR SKOR TERBAIK -->
+        <div class="bg-slate-50 rounded-2xl p-3 sm:p-4 border-2 border-slate-200">
+          <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center justify-between">
+            <span>📋 Daftar Peringkat Lengkap</span>
+            <span class="text-xs font-medium text-slate-500">Top 10 Duta Norma</span>
+          </h3>
+          <div id="leaderboard-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+            <!-- Diisi via JS -->
+          </div>
+        </div>
+
+        <!-- Tombol Kembali -->
+        <div class="mt-6 flex justify-center">
+          <button
+            id="btn-leaderboard-back"
+            type="button"
+            class="btn-3d w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow-md border-b-4 border-sky-700 flex items-center justify-center gap-2"
+          >
+            <span>🏠</span>
+            <span>Kembali ke Halaman Awal</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================
+       MODAL KUIS INTERAKTIF (PERTANYAAN NORMA)
+  ========================================================= -->
+  <div
+    id="quiz-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+  >
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border-4 border-sky-400 p-5 sm:p-6 animate-pop-in my-auto">
+      <!-- Header Modal Kuis -->
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <span
+          id="quiz-type-badge"
+          class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300"
+        >
+          ⭐ Tantangan Kotak Spesial
+        </span>
+        <span
+          id="quiz-category-badge"
+          class="px-2.5 py-1 rounded-full bg-sky-100 text-sky-800 font-semibold text-xs"
+        >
+          Macam-Macam Norma
+        </span>
+      </div>
+
+      <!-- Info Misi Kuis -->
+      <div
+        id="quiz-mission-info"
+        class="mb-3 px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-semibold"
+      >
+        Jawab benar untuk menaiki tangga!
+      </div>
+
+      <!-- Teks Pertanyaan -->
+      <h3
+        id="quiz-question-text"
+        class="text-base sm:text-lg font-bold text-slate-800 leading-snug mb-4"
+      >
+        Pertanyaan akan muncul di sini...
+      </h3>
+
+      <!-- Pilihan Jawaban A, B, C, D -->
+      <div id="quiz-options-container" class="space-y-2.5 mb-4">
+        <!-- Tombol opsi dirender via JS -->
+      </div>
+
+      <!-- Kotak Umpan Balik & Pembahasan (Muncul setelah menjawab) -->
+      <div id="quiz-feedback-box" class="hidden rounded-2xl p-3.5 mb-4 border-2 text-sm">
+        <p id="quiz-feedback-title" class="font-bold text-base mb-1"></p>
+        <p id="quiz-feedback-explanation" class="text-xs sm:text-sm leading-relaxed"></p>
+      </div>
+
+      <!-- Tombol Lanjutkan setelah menjawab -->
+      <button
+        id="btn-quiz-continue"
+        type="button"
+        class="hidden btn-3d w-full py-3 px-5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base shadow-md border-b-4 border-sky-700"
+      >
+        Lanjutkan Permainan ➡️
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL ATURAN MAIN (HOW TO PLAY)
+  ========================================================= -->
+  <div
+    id="rules-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+  >
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border-4 border-amber-300 p-6 animate-pop-in">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <span>📖</span> Cara Bermain Duta Norma
+        </h3>
+        <button
+          id="btn-close-rules"
+          type="button"
+          class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+        >
+          ✕
+        </button>
+      </div>
+      <ul class="space-y-2.5 text-sm text-slate-600 leading-relaxed">
+        <li class="flex items-start gap-2">
+          <span class="font-bold text-sky-600">1.</span>
+          <span>Permainan dimainkan secara bergantian oleh <strong>Pemain 1 (Merah)</strong> dan <strong>Pemain 2 (Biru)</strong> di papan zig-zag 5×5 (Kotak 1 s.d. 25).</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="font-bold text-amber-600">2.</span>
+          <span><strong>Kotak Spesial (⭐):</strong> Jika mendarat di kaki <strong>Tangga</strong>, jawab kuis dengan benar untuk naik! Jika mendarat di kepala <strong>Ular</strong>, jawab benar agar selamat dari gigitan ular.</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="font-bold text-indigo-600">3.</span>
+          <span><strong>Kotak Kuis Bonus (📘):</strong> Jawab pertanyaan norma dengan tepat untuk memperoleh bonus <strong>+1 langkah maju</strong>!</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="font-bold text-emerald-600">4.</span>
+          <span>Pemain pertama yang mencapai <strong>Kotak 25 (Finish 🏆)</strong> menjadi pemenang Duta Norma!</span>
+        </li>
+      </ul>
+      <button
+        id="btn-close-rules-bottom"
+        type="button"
+        class="btn-3d mt-5 w-full py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold border-b-4 border-amber-600"
+      >
+        Siap Bermain! 👍
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL KONFIRMASI KELUAR GAME (PENGGANTI confirm())
+  ========================================================= -->
+  <div
+    id="exit-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+  >
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border-4 border-rose-300 p-6 text-center animate-pop-in">
+      <div class="text-4xl mb-2">🤔</div>
+      <h3 class="text-xl font-bold text-slate-800">Keluar dari Permainan?</h3>
+      <p class="text-sm text-slate-600 mt-1 mb-5">
+        Progres pertandingan saat ini tidak akan disimpan ke leaderboard.
+      </p>
+      <div class="flex gap-3">
+        <button
+          id="btn-cancel-exit"
+          type="button"
+          class="btn-3d flex-1 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border-b-4 border-slate-300"
+        >
+          Batal
+        </button>
+        <button
+          id="btn-confirm-exit"
+          type="button"
+          class="btn-3d flex-1 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold border-b-4 border-rose-700"
+        >
+          Ya, Keluar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       FOOTER
+  ========================================================= -->
+  <footer class="w-full py-3 px-4 text-center text-xs text-slate-500 font-medium">
+    Media Pembelajaran Interaktif PPKn SMP • Materi Norma dan Keadilan
+  </footer>
+
+  <!-- =========================================================
+       SCRIPT LOGIKA GAME, WEB AUDIO API & BANK SOAL NORMA (30 SOAL)
+  ========================================================= -->
+  <script>
+    /**
+     * =========================================================================
+     * 1. BANK SOAL PILIHAN GANDA MATERI NORMA SMP (30 SOAL BERKUALITAS)
+     * Meliputi: Pengertian & Tujuan Norma, 4 Macam Norma (Agama, Kesusilaan,
+     * Kesopanan, Hukum), Sumber & Sanksi, Contoh Perilaku di Keluarga/Sekolah/
+     * Masyarakat, serta Hubungan Norma dengan Keadilan & Negara Hukum.
+     * =========================================================================
+     */
+    const QUESTION_BANK = [
+      {
+        id: 1,
+        category: "Pengertian & Tujuan Norma",
+        question: "Aturan atau ketentuan yang mengikat warga kelompok dalam masyarakat dan dipakai sebagai panduan, tatanan, serta pengendali tingkah laku disebut...",
+        options: ["Adat istiadat", "Norma", "Kebiasaan", "Konstitusi"],
+        correctIndex: 1,
+        explanation: "Norma adalah kaidah atau aturan yang disepakati bersama sebagai pedoman tingkah laku agar tercipta ketertiban dalam masyarakat."
+      },
+      {
+        id: 2,
+        category: "Pengertian & Tujuan Norma",
+        question: "Tujuan utama diciptakannya norma dalam kehidupan bermasyarakat adalah...",
+        options: [
+          "Membatasi kebebasan seluruh warga negara",
+          "Mewujudkan ketertiban, keamanan, dan keadilan bersama",
+          "Memberikan hukuman seberat-beratnya kepada pelanggar",
+          "Menyeragamkan seluruh budaya daerah di Indonesia"
+        ],
+        correctIndex: 1,
+        explanation: "Norma hadir untuk mengatur kepentingan antarindividu sehingga terwujud ketertiban, ketenteraman, dan keadilan sosial."
+      },
+      {
+        id: 3,
+        category: "Macam-Macam Norma",
+        question: "Peraturan hidup yang bersumber dari wahyu Tuhan Yang Maha Esa yang terdapat dalam kitab suci disebut norma...",
+        options: ["Kesusilaan", "Kesopanan", "Agama", "Hukum"],
+        correctIndex: 2,
+        explanation: "Norma agama adalah sekumpulan kaidah hidup manusia yang sumbernya berasal dari wahyu Tuhan Yang Maha Esa."
+      },
+      {
+        id: 4,
+        category: "Macam-Macam Norma",
+        question: "Norma yang bersumber dari suara hati nurani manusia untuk membedakan perbuatan baik dan buruk disebut norma...",
+        options: ["Kesusilaan", "Kesopanan", "Hukum", "Agama"],
+        correctIndex: 0,
+        explanation: "Norma kesusilaan berakar pada hati nurani insan manusia yang bersifat universal (berlaku umum bagi seluruh umat manusia)."
+      },
+      {
+        id: 5,
+        category: "Macam-Macam Norma",
+        question: "Aturan pergaulan yang timbul dan diadakan oleh masyarakat itu sendiri untuk mengatur tata krama dan saling menghormati disebut norma...",
+        options: ["Hukum", "Kesopanan", "Kesusilaan", "Agama"],
+        correctIndex: 1,
+        explanation: "Norma kesopanan bersumber dari pergaulan dan kebiasaan masyarakat setempat, seperti cara berpakaian, bertutur kata, dan bertamu."
+      },
+      {
+        id: 6,
+        category: "Macam-Macam Norma",
+        question: "Peraturan mengenai tingkah laku manusia dalam pergaulan masyarakat yang dibuat oleh badan-badan resmi negara dan bersifat memaksa adalah norma...",
+        options: ["Kesopanan", "Agama", "Hukum", "Kesusilaan"],
+        correctIndex: 2,
+        explanation: "Norma hukum dibuat oleh lembaga negara yang berwenang, bersifat tegas, mengikat seluruh warga, dan memiliki sanksi nyata."
+      },
+      {
+        id: 7,
+        category: "Sanksi Norma",
+        question: "Sanksi bagi seseorang yang melanggar norma kesusilaan dalam kehidupan sehari-hari umumnya berupa...",
+        options: [
+          "Denda uang dan kurungan penjara",
+          "Rasa bersalah, penyesalan, dan gelisah dalam hati",
+          "Dikucilkan dari pergaulan desa setempat",
+          "Teguran tertulis dari ketua RT"
+        ],
+        correctIndex: 1,
+        explanation: "Karena bersumber dari hati nurani, pelanggaran norma kesusilaan menimbulkan sanksi batin seperti rasa menyesal, malu, dan gelisah."
+      },
+      {
+        id: 8,
+        category: "Sanksi Norma",
+        question: "Seseorang yang tidak menghormati orang tua atau berbicara kasar kepada guru akan mendapatkan sanksi norma kesopanan berupa...",
+        options: [
+          "Hukuman pidana penjara",
+          "Dosa di akhirat kelak",
+          "Cemoohan, celaan, atau dikucilkan masyarakat",
+          "Penyitaan harta benda oleh negara"
+        ],
+        correctIndex: 2,
+        explanation: "Pelanggaran norma kesopanan mendapat sanksi sosial dari masyarakat berupa celaan, teguran, cemoohan, atau pengucilan."
+      },
+      {
+        id: 9,
+        category: "Sanksi Norma",
+        question: "Sanksi norma agama bersifat tidak langsung di dunia, yang artinya...",
+        options: [
+          "Langsung dipenjara oleh aparat kepolisian",
+          "Sanksinya berupa dosa yang akan diterima di akhirat kelak",
+          "Tidak memiliki akibat apa pun bagi pelanggarnya",
+          "Hanya berlaku bagi pemuka agama saja"
+        ],
